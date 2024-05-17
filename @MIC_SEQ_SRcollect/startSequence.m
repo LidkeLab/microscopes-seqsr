@@ -40,6 +40,7 @@ switch obj.SaveFileType
         MIC_H5.createGroup(FileH5, 'Channel01');
         MIC_H5.createGroup(FileH5, 'Channel01/Zposition001');
         MIC_H5.createGroup(FileH5,'Calibration');
+        MIC_H5.createGroup(FileH5,'Metadata');
     otherwise
         error('StartSequence:: unknown file save type')
 end
@@ -52,7 +53,9 @@ switch obj.SaveFileType
             'CCDOffset',obj.CalibDataSCMOS.CCDOffset);
        obj.saveAttAndData(FileH5, 'Calibration', struct(), Data, struct())
 end
-
+clear Data
+Att = struct('Version','SEQv2');
+obj.saveAttAndData(FileH5,'Metadata',Att,struct(),struct())
 % Attempt to move to the cell of interest.
 % NOTE: The stepper channels are in the order [y, x, z], but
 %       RefStruct.StepperPos is in the order [x, y, z].
