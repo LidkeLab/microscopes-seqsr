@@ -242,6 +242,8 @@ for ii = 1:obj.NumberOfSequences
     
     % Collect a final set of brightfield images before proceeding to the
     % next sequence.
+    obj.Shutter.close(); % block 647nm from reaching sample
+    obj.Laser405.off(); % ensure the 405nm is turned off
     obj.CameraSCMOS.AcquisitionType = 'sequence';
     obj.CameraSCMOS.TriggerMode = 'internal';
     obj.CameraSCMOS.SequenceLength = obj.NBrightfieldIms;
@@ -290,8 +292,7 @@ for ii = 1:obj.NumberOfSequences
         otherwise
             error('StartSequence:: unknown SaveFileType')
     end
-    obj.Shutter.close(); % block 647nm from reaching sample
-    obj.Laser405.off(); % ensure the 405nm is turned off
+
         
     % Update the coverslip offset.
     if all(obj.AlignReg.OffsetFitSuccess)
