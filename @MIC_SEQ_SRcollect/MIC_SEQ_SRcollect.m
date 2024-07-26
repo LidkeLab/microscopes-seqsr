@@ -267,13 +267,12 @@ classdef MIC_SEQ_SRcollect < MIC_Abstract
             Fm=load(fullfile(p,'GainCalibration.mat'),'Params');
             obj.CalibDataSCMOS = Fm.Params;
             % Setup the sCMOS and set properties as needed.
-            obj.CameraSCMOS = MIC_HamamatsuCamera();
-            CamSet = obj.CameraSCMOS.CameraSetting;
-            CamSet.DefectCorrection.Bit = 1;
-            obj.CameraSCMOS.setCamProperties(CamSet);
+            obj.CameraSCMOS = MIC_DCAM4Camera();
+            %CamSet = obj.CameraSCMOS.CameraSetting;
+            %CamSet.DEFECT_CORRECT_MODE.Ind = 1;
+            %obj.CameraSCMOS.setCamProperties(CamSet);
             obj.CameraSCMOS.ReturnType = 'matlab';
-            obj.CameraSCMOS.setCamProperties( ...
-                obj.CameraSCMOS.CameraSetting);
+           
             obj.CameraSCMOS.ExpTime_Capture = 0.2;
             obj.CameraSCMOS.ExpTime_Sequence = 0.04;
             
