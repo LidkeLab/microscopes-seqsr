@@ -8,13 +8,13 @@ This guide outlines the steps for turning on the sequential imaging microscope. 
 ## Startup Procedure
 
 1. **Turn ON the Power for Stepper Motor Controller**
-   - Locate the power switch at the back of the three-channel bench-top stepper motor controller and turn it on.
+   - Turn ON the power switch of the three-channel bench top stepper motor controller. The switch is located at the back.
 
 2. **Power ON the Camera**
-   - Use the power switch on the rear face of the camera to turn it on.
+   - Power ON the camera using the power switch on the rear face of the camera.
 
 3. **Power ON the 647nm Laser Control Module**
-   - Use the front-face power switch to turn on the laser control module.
+   - Power ON the 647nm laser control module. The power switch is located on the front face. 
    - **Important**: Do not turn the ‘key’ to ‘Laser ON’ at this stage. This will be done after loading the sample and closing the box.
 
 4. **Open Thorlabs Kinesis Software**
@@ -25,10 +25,10 @@ This guide outlines the steps for turning on the sequential imaging microscope. 
 
 6. **Home Each Stepper Motor**
    - In the Kinesis software, press the ‘Home’ button for one of the stepper motors (X, Y, or Z).
-   - Ensure that the corresponding motor on the microscope stage moves correctly (first forward, then reverse). The display on the Kinesis control panel should read ‘0.00 mm’ with ‘Homed’ shown near a green button.
+   - Observe and make sure that the corresponding stepper motor on the microscope stage is moving correctly (first forward and then in reverse). At the end of this process the display on the Kinesis control of the stepper motor should read ‘0.00 mm’ and ‘Homed’ displayed on the right/top side of the panel near to a green button.
 
 7. **Repeat Homing for Remaining Motors**
-   - Repeat the homing process for the other two stepper motors (steps 6 and 7).
+   - Repeat the homing process for the other two stepper motors (step 6).
 
 8. **Close Kinesis Software**
 
