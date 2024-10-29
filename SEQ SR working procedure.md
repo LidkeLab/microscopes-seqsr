@@ -1,7 +1,7 @@
 # Sequential Imaging Microscope Setup Guide
 _Last updated: 26 October 2024_
 
-This guide outlines the steps for turning on the sequential imaging microscope. To ensure proper initialization and safety, start with every individual component of the microscope turned off, including the computer. Follow the steps in the order listed below.
+This guide outlines the steps for turning on the sequential imaging microscope. To ensure proper initialization and safety, start with every individual component of the microscope turned off. Follow the steps in the order listed below.
 
 ---
 
