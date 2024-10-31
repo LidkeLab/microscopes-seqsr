@@ -1,4 +1,4 @@
-classdef MIC_SEQ_SRcollect < MIC_Abstract
+classdef MIC_SEQ_SRcollect < mic.abstract
 % MIC_SEQ_SRcollect SuperResolution data collection software.
 % Super resolution data collection class for Sequential microscope
 % Works with Matlab Instrument Control (MIC) classes since March 2017
@@ -132,8 +132,8 @@ classdef MIC_SEQ_SRcollect < MIC_Abstract
     
     methods
         function obj = MIC_SEQ_SRcollect(RunTestingMode)
-            % Enable the autonaming feature of MIC_Abstract.
-            obj = obj@MIC_Abstract(~nargout);
+            % Enable the autonaming feature of mic.abstract.
+            obj = obj@mic.abstract(~nargout);
             
             % Set a property listener for the StatusString property.
             addlistener(obj, 'StatusString', 'PostSet', @obj.updateStatus);
@@ -267,7 +267,7 @@ classdef MIC_SEQ_SRcollect < MIC_Abstract
             Fm=load(fullfile(p,'GainCalibration.mat'),'Params');
             obj.CalibDataSCMOS = Fm.Params;
             % Setup the sCMOS and set properties as needed.
-            obj.CameraSCMOS = MIC_DCAM4Camera();
+            obj.CameraSCMOS = mic.camera.DCAM4Camera();
             %CamSet = obj.CameraSCMOS.CameraSetting;
             %CamSet.DEFECT_CORRECT_MODE.Ind = 1;
             %obj.CameraSCMOS.setCamProperties(CamSet);
@@ -285,7 +285,7 @@ classdef MIC_SEQ_SRcollect < MIC_Abstract
             obj.StatusString = 'Setting up sample stage piezos...';
             
             % Connect to the piezos and create the piezo stage object.
-            obj.StagePiezo = MIC_NanoMaxPiezos(...
+            obj.StagePiezo = mic.stage3D.NanoMaxPiezos(...
                 obj.XPiezoSerialNums{1}, obj.XPiezoSerialNums{2}, ...
                 obj.YPiezoSerialNums{1}, obj.YPiezoSerialNums{2}, ...
                 obj.ZPiezoSerialNums{1}, obj.ZPiezoSerialNums{2}, ...
@@ -302,7 +302,7 @@ classdef MIC_SEQ_SRcollect < MIC_Abstract
             % Setup the stepper motors for the NanoMax stage and move the
             % stage to a safe position so as to avoid hitting the
             % objective.
-            obj.StageStepper = MIC_StepperMotor('70850323');
+            obj.StageStepper = mic.StepperMotor('70850323');
             obj.StageStepper.moveToPosition(3, 4); % z stepper
             obj.StageStepper.moveToPosition(1, 2.0650); % y stepper
             obj.StageStepper.moveToPosition(2, 2.2780); % x stepper
@@ -333,7 +333,7 @@ classdef MIC_SEQ_SRcollect < MIC_Abstract
             obj.StatusString = 'Setting up sample illumination LED...';
             
             % Setup the LED lamp object.
-            obj.Lamp660 = MIC_ThorlabsLED('Dev1', 'ao0');
+            obj.Lamp660 = mic.lightsource.ThorlabsLED('Dev1', 'ao0');
             
             % Update the status indicator for the GUI.
             obj.StatusString = '';
@@ -344,13 +344,13 @@ classdef MIC_SEQ_SRcollect < MIC_Abstract
             obj.StatusString = 'Setting up lasers...';
             
             % Setup the needed laser(s).
-            obj.Laser647 = MIC_MPBLaser();
-            %obj.Laser647 = MIC_TCubeLaserDiode('64849775', 'Power', 80, 182.5, 10);
-            obj.Laser405 = MIC_TCubeLaserDiode('64841724', ...
+            obj.Laser647 = mic.lightsource.MPBLaser();
+            %obj.Laser647 = mic.lightsource.TCubeLaserDiode('64849775', 'Power', 80, 182.5, 10);
+            obj.Laser405 = mic.lightsource.TCubeLaserDiode('64841724', ...
                 'Power', 32.25, 20.05, 10);
             % Usage: 
-            % TLD = MIC_TCubeLaserDiode(SerialNo, Mode, ...
-            %                           MaxPower, WperA, TIARange)
+            % TLD = mic.lightsource.TCubeLaserDiode(SerialNo, Mode, ...
+            %                                       MaxPower, WperA, TIARange)
             % Max power was set to 32.25 mW (~80% of max), corresponding
             % to a current of 32.25 mA.  WperA was found by measuring the 
             % output power for input currents of 34 mA to 64 mA in 10 mA 
@@ -371,7 +371,7 @@ classdef MIC_SEQ_SRcollect < MIC_Abstract
             
             % Setup the flip mount object to control the neutral density
             % filter.
-            obj.FlipMount = MIC_FlipMountTTL('Dev1', 'Port0/Line0');
+            obj.FlipMount = mic.FlipMountTTL('Dev1', 'Port0/Line0');
             obj.FlipMount.FilterIn(); % place ND filter in 647 laser path
             
             % Update the status indicator for the GUI.
@@ -383,7 +383,7 @@ classdef MIC_SEQ_SRcollect < MIC_Abstract
             obj.StatusString = 'Setting up the shutter...';
             
             % Setup the shutter for control of the 647nm laser.
-            obj.Shutter = MIC_ShutterTTL('Dev1', 'Port0/Line1');
+            obj.Shutter = mic.ShutterTTL('Dev1', 'Port0/Line1');
             obj.Shutter.close(); % close the shutter by default
             
             % Update the status indicator for the GUI.
@@ -397,7 +397,7 @@ classdef MIC_SEQ_SRcollect < MIC_Abstract
         
             %CalibrationFilePath = ['C:\Users\lidkelab\Documents\', ...
              %   'MATLAB\matlab-instrument-control\Reg3DCalFile.mat'];
-            obj.AlignReg = MIC_Reg3DTrans(obj.CameraSCMOS, ...
+            obj.AlignReg = mic.Reg3DTrans(obj.CameraSCMOS, ...
                 obj.StagePiezo, CalibrationFilePath);
             
             % Modify properties of the registration object as needed.
@@ -705,8 +705,8 @@ classdef MIC_SEQ_SRcollect < MIC_Abstract
     end
     
     methods (Static)
-        function State = unitTest()
-            % unitTest for the sequential microscope.. not yet written!
+        function State = funcTest()
+            % funcTest for the sequential microscope.. not yet written!
         end
 
     end
