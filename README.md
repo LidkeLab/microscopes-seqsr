@@ -3,11 +3,8 @@
 The sequential super-resolution microscope is a custom-built multi-target super-resolution imaging system utilizing the sequential imaging strategy. This microscope is optimized for using photo-physical properties of the fluorophore ‘Alexa Fluor 647’ for each of the multiple targets being imaged, and images are recorded using a high quantum efficiency digital CMOS camera. This microscope is also equipped with automated re-finding of once registered cells and active image stabilization for nanometer scale drift correction while imaging. Computer control of the instrument is done using custom written MATLAB software. 
 ```
 MIC_SEQ_SRcollect();
-% REQUIRES:
-%   Matlab 2014b or higher
-%   matlab-instrument-control (MIC) classes
 ```
-MIC_SEQ_SRcollect is a super resolution data collection software. The super resolution data collection class for Sequential microscope works with Matlab Instrument Control (MIC) classes [give link to mic]
+MIC_SEQ_SRcollect is a super resolution data collection software. This class requires Matlab 2014b or higher and works with Matlab Instrument Control (MIC) classes [matlab-instrument-control](https://github.com/LidkeLab/matlab-instrument-control/tree/main)
 
 ## Equipment List
 ### Microscope body
