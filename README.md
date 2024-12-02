@@ -7,7 +7,7 @@ MIC_SEQ_SRcollect();
 %   Matlab 2014b or higher
 %   matlab-instrument-control (MIC) classes
 ```
-MIC_SEQ_SRcollect SuperResolution data collection software. The Super resolution data collection class for Sequential microscope works with Matlab Instrument Control (MIC) classes [give link to mic]
+MIC_SEQ_SRcollect is a super resolution data collection software. The super resolution data collection class for Sequential microscope works with Matlab Instrument Control (MIC) classes [give link to mic]
 
 ## Equipment List
 ### Microscope body
@@ -25,10 +25,7 @@ MIC_SEQ_SRcollect SuperResolution data collection software. The Super resolution
 - National Instrument, USB-6008, DAQ card.
 ### Filters
 - Semrock, Di02-R635, dichroic mirror
-- Semrock, FF01-708/75-25-D, band pass filter
-
-## Sequential Super-Resolution Microscope
-For setting up the sequential super-resolution microscope for data collection, follow the steps in the [Sequential Imaging Microscope Setup Guide](.md).
+- Semrock, FF01-708/75-25-D, band pass filter.
 
 ## Sequential Super-Resolution Microscope Setup Guide
 For setting up the sequential super-resolution microscope for data collection, Follow the steps in the order listed below:
