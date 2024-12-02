@@ -12,7 +12,7 @@ MIC_SEQ_SRcollect is a super resolution data collection software. This class req
 - Thorlabs, MAX381/M, 3-Axis NanoMax stage, travel 4 mm with stepper motor and 20 $\mathrm{\mu m}$ with piezo.
 ### Objective
 - Olympus, UPLSAPO 100XS, silicone oil Immersion, NA 1.35, WD 0.2 mm, FN 22.
-### Cameras
+### Camera
 - Hamamatsu, C11440-22CU, sCMOS camera, 2048x2048 pixels, pixel size 6.5 $\mathrm{\mu m}$.
 ### Illumination
 - MPB Communications, 2RU-VFL-P-500-647-B1R, 647 nm laser, 500 mW.
