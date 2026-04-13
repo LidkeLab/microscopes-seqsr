@@ -318,60 +318,20 @@ classdef MIC_SEQ_SRcollect < mic.abstract
         end
         
         function setupStageStepper(obj)
-            % Connect to the stepper motors, home any axes that are not
-            % already homed, and move the stage to a safe position
-            % away from the objective. Homing is done from MATLAB via
-            % the MIC framework (mic.StepperMotor.goHome) so the user
-            % no longer needs to open Kinesis to home the motors.
-
+            % Connect to the stepper motors and move the stage to a
+            % safe position away from the objective. The controller
+            % retains its position reference across connections, so
+            % homing is not needed here — only after a power cycle
+            % (see homeSteppers).
             obj.StatusString = 'Setting up sample stage stepper motors...';
+
             obj.StageStepper = mic.StepperMotor('70850323');
-
-            % Home any axes that are not yet homed. The controller
-            % retains its homed state across MATLAB sessions while
-            % powered, so this is usually a no-op except after a power
-            % cycle of the stepper controller. Z is homed first because
-            % it moves toward the objective during homing.
-            HOMED_BIT = uint32(hex2dec('400'));
-            HomeOrder = [3, 1, 2];  % Z, Y, X
-            HomeLabels = {'Z', 'Y', 'X'};
-            for ii = 1:numel(HomeOrder)
-                ch = HomeOrder(ii);
-                status = uint32(obj.StageStepper.getStatus(ch));
-                if bitand(status, HOMED_BIT) == 0
-                    obj.StatusString = sprintf( ...
-                        'Homing stepper %s axis...', HomeLabels{ii});
-                    obj.StageStepper.goHome(ch);
-                    % Wait for the homed bit to be set.
-                    HomeTimeout = 60;  % seconds
-                    homed = false;
-                    for t = 1:HomeTimeout
-                        pause(1);
-                        status = uint32(obj.StageStepper.getStatus(ch));
-                        if bitand(status, HOMED_BIT) ~= 0
-                            homed = true;
-                            break
-                        end
-                    end
-                    if ~homed
-                        obj.StageStepper.delete();
-                        error(['Stepper %s axis did not finish ', ...
-                            'homing within %d s. Power cycle the ', ...
-                            'controller and retry.'], ...
-                            HomeLabels{ii}, HomeTimeout);
-                    end
-                end
-            end
-
-            % Move the stage to a safe position away from the
-            % objective. Z first (away from objective) before X/Y.
-            obj.StatusString = 'Moving stage to safe position...';
             obj.StageStepper.moveToPosition(3, 4); % z stepper
             obj.StageStepper.moveToPosition(1, 2.0650); % y stepper
             obj.StageStepper.moveToPosition(2, 2.2780); % x stepper
 
             % Verify the steppers reached the requested positions.
-            pause(obj.StepperWaitTime); % let stage settle down first
+            pause(obj.StepperWaitTime);
             XPosition = obj.StageStepper.getPosition(2);
             YPosition = obj.StageStepper.getPosition(1);
             ZPosition = obj.StageStepper.getPosition(3);
@@ -381,10 +341,38 @@ classdef MIC_SEQ_SRcollect < mic.abstract
                     || (abs(ZPosition - 4) > SmallStepSize)
                 warning(['There is a problem with the stepper motors.', ...
                     ' Please power cycle the stepper motor ', ...
-                    'controller and run SEQ.setupStageStepper()']);
-                obj.StageStepper.delete(); % delete so it can't be used
+                    'controller and run SEQ.homeSteppers()']);
+                obj.StageStepper.delete();
             end
 
+            obj.StatusString = '';
+        end
+
+        function homeSteppers(obj)
+            % Home all stepper motor axes. Call this after power cycling
+            % the stepper controller. Do NOT call with a sample loaded
+            % — homing moves toward the objective.
+            obj.StatusString = 'Homing stepper motors...';
+            HomeOrder = [3, 1, 2];  % Z first (toward objective)
+            HomeLabels = {'Z', 'Y', 'X'};
+            for ii = 1:numel(HomeOrder)
+                ch = HomeOrder(ii);
+                obj.StatusString = sprintf( ...
+                    'Homing stepper %s axis...', HomeLabels{ii});
+                obj.StageStepper.goHome(ch);
+                % Wait for homing to complete (position returns to 0).
+                for t = 1:60
+                    pause(1);
+                    pos = obj.StageStepper.getPosition(ch);
+                    if abs(pos) < 0.001 && t > 3
+                        break
+                    end
+                    if t == 60
+                        warning('%s axis did not finish homing.', ...
+                            HomeLabels{ii});
+                    end
+                end
+            end
             obj.StatusString = '';
         end
         

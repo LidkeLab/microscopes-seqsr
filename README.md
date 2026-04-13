@@ -53,7 +53,8 @@ To ensure proper initialization and safety, start with every individual componen
      ```matlab
      SEQ = MIC_SEQ_SRcollect();
      ```
-   - The software will automatically home the stepper motors if needed and move the stage to a safe position. Stepper homing is no longer done through Kinesis.
+   - The software will connect to the stepper motors and move the stage to a safe position.
+   - If the stepper controller was power cycled, run `SEQ.homeSteppers()` after startup to re-home the motors. Do not home with a sample loaded.
    - If the software was previously closed abnormally (e.g. MATLAB crash) while a sample was loaded, answer "Yes" to the startup prompt. The software will safely raise the stage so the sample can be removed, then continue with normal setup.
 
 7. **Verify Initialization of Controllers**
