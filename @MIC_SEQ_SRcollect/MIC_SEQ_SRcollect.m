@@ -421,9 +421,23 @@ classdef MIC_SEQ_SRcollect < mic.abstract
                     prevPos = pos;
                 end
                 if ~homed
-                    fprintf(' TIMEOUT (pos=%.4f mm)\n', pos);
-                    warning('%s axis did not finish homing.', ...
-                        HomeLabels{ii});
+                    fprintf(' FAILED (pos=%.4f mm)\n', pos);
+                    resp = questdlg(sprintf( ...
+                        ['%s axis failed to home. Power cycle the ', ...
+                         'stepper controller, then click Retry.'], ...
+                        HomeLabels{ii}), ...
+                        'Homing Failed', 'Retry', 'Abort', 'Retry');
+                    if strcmp(resp, 'Retry')
+                        % Reconnect and restart homing from the
+                        % beginning.
+                        obj.StageStepper.delete();
+                        obj.StageStepper = mic.StepperMotor('70850323');
+                        fprintf('Reconnected. Restarting homing...\n');
+                        obj.homeSteppers();
+                        return
+                    else
+                        warning('%s axis not homed.', HomeLabels{ii});
+                    end
                 end
             end
             fprintf('Homing complete.\n');
