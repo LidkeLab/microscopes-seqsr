@@ -557,17 +557,26 @@ classdef MIC_SEQ_SRcollect < mic.abstract
         end
         
         function loadSample(obj)
-            % Update the status indicator for the GUI.
             obj.StatusString = 'Loading the sample...';
-            
-            % Lower the sample stage towards the objective
+
+            fprintf('loadSample: centering piezos...\n');
             obj.StagePiezo.center();
-            obj.StageStepper.moveToPosition(1, 2.0650); % y stepper
-            obj.StageStepper.moveToPosition(2, 2.2780); % x stepper
-            obj.StageStepper.moveToPosition(3, obj.CoverslipZPosition); % z stepper
-            
-            % Update the status indicator for the GUI.
+
+            fprintf('loadSample: moving Y to 2.0650...\n');
+            obj.StageStepper.moveToPosition(1, 2.0650);
+            fprintf('loadSample: moving X to 2.2780...\n');
+            obj.StageStepper.moveToPosition(2, 2.2780);
+            fprintf('loadSample: moving Z to %.4f...\n', obj.CoverslipZPosition);
+            obj.StageStepper.moveToPosition(3, obj.CoverslipZPosition);
+
+            pause(obj.StepperWaitTime);
+            fprintf('loadSample: final positions X=%.4f Y=%.4f Z=%.4f\n', ...
+                obj.StageStepper.getPosition(2), ...
+                obj.StageStepper.getPosition(1), ...
+                obj.StageStepper.getPosition(3));
+
             obj.StatusString = '';
+            fprintf('loadSample: done.\n');
         end
         
         function findCoverslipFocus(obj)
