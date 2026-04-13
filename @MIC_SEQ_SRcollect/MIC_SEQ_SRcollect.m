@@ -344,6 +344,10 @@ classdef MIC_SEQ_SRcollect < mic.abstract
                 end
             end
 
+            % Stop any in-progress moves before issuing new ones.
+            obj.StageStepper.stopAll();
+            pause(0.5);
+
             obj.StageStepper.moveToPosition(3, 4); % z stepper
             obj.StageStepper.moveToPosition(1, 2.0650); % y stepper
             obj.StageStepper.moveToPosition(2, 2.2780); % x stepper
