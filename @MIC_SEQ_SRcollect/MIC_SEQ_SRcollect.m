@@ -326,6 +326,21 @@ classdef MIC_SEQ_SRcollect < mic.abstract
             obj.StatusString = 'Setting up sample stage stepper motors...';
 
             obj.StageStepper = mic.StepperMotor('70850323');
+
+            % If all axes report position 0, the controller was likely
+            % power-cycled and has no position reference. Home first.
+            if abs(obj.StageStepper.getPosition(1)) < 0.001 ...
+                    && abs(obj.StageStepper.getPosition(2)) < 0.001 ...
+                    && abs(obj.StageStepper.getPosition(3)) < 0.001
+                resp = questdlg(['All stepper positions are at zero. ', ...
+                    'The controller may have been power cycled. ', ...
+                    'Home the motors now? (No sample must be loaded)'], ...
+                    'Home Steppers?', 'Home', 'Skip', 'Home');
+                if strcmp(resp, 'Home')
+                    obj.homeSteppers();
+                end
+            end
+
             obj.StageStepper.moveToPosition(3, 4); % z stepper
             obj.StageStepper.moveToPosition(1, 2.0650); % y stepper
             obj.StageStepper.moveToPosition(2, 2.2780); % x stepper
