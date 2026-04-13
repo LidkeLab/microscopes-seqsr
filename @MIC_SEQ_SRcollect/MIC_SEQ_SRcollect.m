@@ -345,19 +345,30 @@ classdef MIC_SEQ_SRcollect < mic.abstract
             obj.StageStepper.moveToPosition(1, 2.0650); % y stepper
             obj.StageStepper.moveToPosition(2, 2.2780); % x stepper
 
-            % Verify the steppers reached the requested positions.
-            pause(obj.StepperWaitTime);
-            XPosition = obj.StageStepper.getPosition(2);
-            YPosition = obj.StageStepper.getPosition(1);
-            ZPosition = obj.StageStepper.getPosition(3);
-            SmallStepSize = obj.StepperSmallStep;
-            if (abs(XPosition - 2.2780) > SmallStepSize) ...
-                    || (abs(YPosition - 2.0650) > SmallStepSize) ...
-                    || (abs(ZPosition - 4) > SmallStepSize)
-                warning(['There is a problem with the stepper motors.', ...
-                    ' Please power cycle the stepper motor ', ...
-                    'controller and run SEQ.homeSteppers()']);
-                obj.StageStepper.delete();
+            % Wait for the steppers to reach the requested positions.
+            % Poll until all axes are within tolerance or timeout.
+            TargetX = 2.2780; TargetY = 2.0650; TargetZ = 4;
+            Tol = obj.StepperSmallStep;
+            Timeout = 15; % seconds
+            settled = false;
+            for t = 1:Timeout
+                pause(1);
+                X = obj.StageStepper.getPosition(2);
+                Y = obj.StageStepper.getPosition(1);
+                Z = obj.StageStepper.getPosition(3);
+                if abs(X - TargetX) < Tol ...
+                        && abs(Y - TargetY) < Tol ...
+                        && abs(Z - TargetZ) < Tol
+                    settled = true;
+                    break
+                end
+            end
+            if ~settled
+                warning(['Stepper motors did not reach the ', ...
+                    'target positions within %d s. Current: ', ...
+                    'X=%.4f Y=%.4f Z=%.4f. Try power cycling ', ...
+                    'the controller and run SEQ.homeSteppers()'], ...
+                    Timeout, X, Y, Z);
             end
 
             obj.StatusString = '';
