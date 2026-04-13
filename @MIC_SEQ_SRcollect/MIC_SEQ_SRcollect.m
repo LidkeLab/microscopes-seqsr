@@ -384,21 +384,41 @@ classdef MIC_SEQ_SRcollect < mic.abstract
             HomeLabels = {'Z', 'Y', 'X'};
             for ii = 1:numel(HomeOrder)
                 ch = HomeOrder(ii);
-                fprintf('  Homing %s axis (channel %d)...', ...
-                    HomeLabels{ii}, ch);
+                startPos = obj.StageStepper.getPosition(ch);
+                fprintf('  %s axis (ch %d): start=%.4f mm, homing...', ...
+                    HomeLabels{ii}, ch, startPos);
                 obj.StatusString = sprintf( ...
                     'Homing stepper %s axis...', HomeLabels{ii});
                 obj.StageStepper.goHome(ch);
-                % Wait for homing to complete (position returns to 0).
+                % Wait for homing to complete. The motor moves to the
+                % limit switch then returns to 0. Detect completion by
+                % watching for position to settle near 0, or for position
+                % to stop changing (motor finished moving).
                 homed = false;
+                prevPos = startPos;
+                stableCount = 0;
                 for t = 1:60
                     pause(1);
                     pos = obj.StageStepper.getPosition(ch);
                     if abs(pos) < 0.001 && t > 3
-                        fprintf(' done (%.4f mm)\n', pos);
+                        % Position is at 0 — homing succeeded.
+                        fprintf(' done (%.4f mm, %ds)\n', pos, t);
                         homed = true;
                         break
                     end
+                    if abs(pos - prevPos) < 0.0001 && t > 3
+                        stableCount = stableCount + 1;
+                    else
+                        stableCount = 0;
+                    end
+                    if stableCount >= 3
+                        % Position stopped changing — motor finished
+                        % but didn't reach 0. May already be homed.
+                        fprintf(' settled at %.4f mm (%ds)\n', pos, t);
+                        homed = true;
+                        break
+                    end
+                    prevPos = pos;
                 end
                 if ~homed
                     fprintf(' TIMEOUT (pos=%.4f mm)\n', pos);
