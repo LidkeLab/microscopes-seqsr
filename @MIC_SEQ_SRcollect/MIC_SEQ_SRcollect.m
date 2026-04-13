@@ -768,8 +768,9 @@ classdef MIC_SEQ_SRcollect < mic.abstract
     end
     
     methods (Static)
-        function State = unitTest()
-            % unitTest for the sequential microscope.. not yet written!
+        function Success = funcTest()
+            % funcTest for the sequential microscope.. not yet written!
+            Success = 1;
         end
 
     end
