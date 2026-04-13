@@ -6,6 +6,8 @@ MIC_SEQ_SRcollect();
 ```
 MIC_SEQ_SRcollect is a super resolution data collection software. This class requires Matlab 2014b or higher and works with Matlab Instrument Control (MIC) classes [matlab-instrument-control](https://github.com/LidkeLab/matlab-instrument-control/tree/main)
 
+For the complete operating guide — sample loading, cell selection, acquisition, sequential imaging, and troubleshooting — see the **[User Guide](userguide.md)**.
+
 ## Equipment List
 ### Microscope body
 - Home built base.
