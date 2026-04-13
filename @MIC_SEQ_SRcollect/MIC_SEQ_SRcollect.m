@@ -189,6 +189,7 @@ classdef MIC_SEQ_SRcollect < mic.abstract
                 obj.unloadSample(); % move stage up for sample mounting
             end
             obj.StatusString = '';
+            fprintf('MIC_SEQ_SRcollect setup complete. Ready.\n');
         end
         
         function delete(obj)
