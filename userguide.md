@@ -16,11 +16,7 @@ Start with all microscope components powered off.
    SEQ = MIC_SEQ_SRcollect();
    ```
    The software will connect to the stepper motors and move the stage to a safe position. If it asks "Is the sample fixed on the stage?" answer **No** for a normal startup.
-7. **Home steppers if needed** — if the stepper controller was power cycled, run:
-   ```matlab
-   SEQ.homeSteppers();
-   ```
-   Do **not** home with a sample loaded — homing moves toward the objective.
+7. **Home steppers if prompted** — if the stepper controller was power cycled, the software will detect that all positions are at zero and ask whether to home the motors. Click **Home** to proceed (no sample must be loaded). You can also home manually at any time with `SEQ.homeSteppers()`.
 8. **Verify initialization** — confirm all piezo/strain-gauge controllers display the expected values. If any controller failed to initialize, use the **Reconnect Piezos** button on the GUI.
 
 ### Recovering from a crash
@@ -153,7 +149,7 @@ The 647nm shutter may not be in remote mode. Hold the **enable** button on the s
 The flip mount was reset to the wrong mode. In Kinesis, set the flip mount to **go to position** mode (instead of toggle).
 
 ### Stepper motors not responding
-Power cycle the stepper motor controller. After restarting `MIC_SEQ_SRcollect()`, run `SEQ.homeSteppers()` to re-home the motors (no sample loaded).
+Power cycle the stepper motor controller and restart `MIC_SEQ_SRcollect()`. The software will detect the power cycle and prompt you to home the motors.
 
 ### Piezo controller not initialized
 Use the **Reconnect Piezos** button on the GUI to reconnect individual axes. This may require power cycling the affected controller.
