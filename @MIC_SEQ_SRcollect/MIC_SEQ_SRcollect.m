@@ -161,6 +161,7 @@ classdef MIC_SEQ_SRcollect < mic.abstract
                 obj.StatusString = ...
                     'Recovery: raising stage away from objective...';
                 stepperRecovery = mic.StepperMotor('70850323');
+                pause(3);
                 stepperRecovery.moveToPosition(3, 4);
                 pause(obj.StepperWaitTime);
 
@@ -326,6 +327,7 @@ classdef MIC_SEQ_SRcollect < mic.abstract
             obj.StatusString = 'Setting up sample stage stepper motors...';
 
             obj.StageStepper = mic.StepperMotor('70850323');
+            pause(3); % let LoadSettings/EnableChannel/StartPolling settle
 
             % If all axes report position 0, the controller was likely
             % power-cycled and has no position reference. Home first.
@@ -432,6 +434,7 @@ classdef MIC_SEQ_SRcollect < mic.abstract
                         % beginning.
                         obj.StageStepper.delete();
                         obj.StageStepper = mic.StepperMotor('70850323');
+                        pause(3);
                         fprintf('Reconnected. Restarting homing...\n');
                         obj.homeSteppers();
                         return
