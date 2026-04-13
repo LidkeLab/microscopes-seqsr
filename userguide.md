@@ -42,6 +42,16 @@ After loading the sample, you need to find the coverslip surface:
 
 The `CoverslipZPosition` property stores the expected Z position of the coverslip. If the coverslip is consistently at a different Z position, update this value so that **Load Sample** brings the stage closer to focus on the first try.
 
+## Setting Up Save Directories
+
+Before selecting cells, configure the save locations on the GUI:
+
+1. Set **TopDir** to the root directory where all data will be saved (e.g. `Y:\Data` or `C:\Users\kalidke\Documents\Data`).
+2. Set **CoverslipName** to an identifier for this coverslip/experiment (e.g. `CS01_AF647_tubulin`). Data will be saved under `TopDir/CoverslipName/`.
+3. Optionally set **FilenameTag** to add a suffix to data filenames.
+
+Reference images, sequence data, and metadata are all saved relative to these directories. If they are not set, files will be saved in the current MATLAB working directory.
+
 ## Finding and Selecting Cells
 
 Cell selection uses a 10x10 grid system. Each grid button on the GUI corresponds to a region of the coverslip.
