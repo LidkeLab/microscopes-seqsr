@@ -153,13 +153,21 @@ Data is saved as HDF5 files in the `TopDir/CoverslipName/` directory:
 
 ## Shutdown
 
-1. Run:
+1. **Turn off the 647nm laser** — turn the key on the laser control module to the OFF position.
+2. **Unload the sample** — press **Unload Sample** on the GUI. The stage moves up to the safe position away from the objective.
+3. **Remove the sample** from the stage.
+4. **Clean the objective** — carefully remove any immersion oil from the objective lens using appropriate lens tissue and solvent.
+5. **Close the software** — in the MATLAB command window, run:
    ```matlab
    SEQ.delete();
    ```
-   This turns off lasers, closes the shutter, and inserts the ND filter.
-2. Turn off the laser speckle reducer.
-3. Turn off all hardware components (camera, laser module, stepper controller, extension power strip).
+   This closes the shutter, inserts the ND filter, and turns off the 405nm laser.
+6. **Turn off hardware** in this order:
+   - Laser speckle reducer
+   - Extension power strip (piezos and strain gauges)
+   - 647nm laser control module
+   - Camera
+   - Stepper motor controller
 
 ## Troubleshooting
 
