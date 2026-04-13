@@ -378,27 +378,35 @@ classdef MIC_SEQ_SRcollect < mic.abstract
             % Home all stepper motor axes. Call this after power cycling
             % the stepper controller. Do NOT call with a sample loaded
             % — homing moves toward the objective.
+            fprintf('Homing stepper motors...\n');
             obj.StatusString = 'Homing stepper motors...';
             HomeOrder = [3, 1, 2];  % Z first (toward objective)
             HomeLabels = {'Z', 'Y', 'X'};
             for ii = 1:numel(HomeOrder)
                 ch = HomeOrder(ii);
+                fprintf('  Homing %s axis (channel %d)...', ...
+                    HomeLabels{ii}, ch);
                 obj.StatusString = sprintf( ...
                     'Homing stepper %s axis...', HomeLabels{ii});
                 obj.StageStepper.goHome(ch);
                 % Wait for homing to complete (position returns to 0).
+                homed = false;
                 for t = 1:60
                     pause(1);
                     pos = obj.StageStepper.getPosition(ch);
                     if abs(pos) < 0.001 && t > 3
+                        fprintf(' done (%.4f mm)\n', pos);
+                        homed = true;
                         break
                     end
-                    if t == 60
-                        warning('%s axis did not finish homing.', ...
-                            HomeLabels{ii});
-                    end
+                end
+                if ~homed
+                    fprintf(' TIMEOUT (pos=%.4f mm)\n', pos);
+                    warning('%s axis did not finish homing.', ...
+                        HomeLabels{ii});
                 end
             end
+            fprintf('Homing complete.\n');
             obj.StatusString = '';
         end
         
