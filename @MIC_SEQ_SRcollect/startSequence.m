@@ -76,7 +76,11 @@ end
 if obj.UseBrightfieldReg
     obj.StatusString = sprintf(['Cell %g, Sequence 1 - ', ...
         'Attempting initial brightfield alignment...'], RefStruct.CellIdx);
-    obj.Lamp660.setPower(RefStruct.LampPower);
+    if isfield(RefStruct, 'LampPower')
+        obj.Lamp660.setPower(RefStruct.LampPower);
+    else
+        obj.Lamp660.setPower(obj.Lamp660Power);
+    end
     pause(obj.LampWait);
     obj.CameraSCMOS.ExpTime_Capture = obj.ExposureTimeCapture;
     obj.CameraSCMOS.AcquisitionType = 'capture';
@@ -192,7 +196,11 @@ for ii = 1:obj.NumberOfSequences
         obj.StatusString = sprintf(['Cell %g, Sequence %i - ', ...
             'Attempting periodic registration...'], ...
             RefStruct.CellIdx, ii);
+        if isfield(RefStruct, 'LampPower')
         obj.Lamp660.setPower(RefStruct.LampPower);
+    else
+        obj.Lamp660.setPower(obj.Lamp660Power);
+    end
         pause(obj.LampWait);
         obj.CameraSCMOS.ExpTime_Capture = obj.ExposureTimeCapture;
         obj.CameraSCMOS.AcquisitionType = 'capture';
@@ -218,7 +226,11 @@ for ii = 1:obj.NumberOfSequences
     obj.CameraSCMOS.SequenceLength = obj.NBrightfieldIms;
     obj.CameraSCMOS.ExpTime_Sequence = obj.ExposureTimeCapture;
     obj.CameraSCMOS.ROI = obj.SCMOS_ROI_Collect;
-    obj.Lamp660.setPower(RefStruct.LampPower);
+    if isfield(RefStruct, 'LampPower')
+        obj.Lamp660.setPower(RefStruct.LampPower);
+    else
+        obj.Lamp660.setPower(obj.Lamp660Power);
+    end
     pause(obj.LampWait);
     PreSeqImages = obj.CameraSCMOS.start_sequence();
     obj.Lamp660.setPower(0);
@@ -250,7 +262,11 @@ for ii = 1:obj.NumberOfSequences
     obj.CameraSCMOS.SequenceLength = obj.NBrightfieldIms;
     obj.CameraSCMOS.ExpTime_Sequence = obj.ExposureTimeCapture;
     obj.CameraSCMOS.ROI = obj.SCMOS_ROI_Collect;
-    obj.Lamp660.setPower(RefStruct.LampPower);
+    if isfield(RefStruct, 'LampPower')
+        obj.Lamp660.setPower(RefStruct.LampPower);
+    else
+        obj.Lamp660.setPower(obj.Lamp660Power);
+    end
     pause(obj.LampWait);
     PostSeqImages = obj.CameraSCMOS.start_sequence();
     obj.Lamp660.setPower(0);
