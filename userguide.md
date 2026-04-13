@@ -29,7 +29,18 @@ If the stepper controller was also power-cycled during the crash, the software c
 
 1. Place the coverslip with the sample on the stage.
 2. Press **Load Sample** on the GUI. The stepper moves Z down to the `CoverslipZPosition` (default 1.5mm) and centers the piezos.
-3. Turn the 647nm laser key to "Laser ON" and close the enclosure box.
+3. **Close the enclosure box**, then turn the 647nm laser key to "Laser ON".
+
+### Finding the coverslip
+
+After loading the sample, you need to find the coverslip surface:
+
+1. Press **Find Coverslip** on the GUI. This starts a live full-frame camera view with 660nm lamp illumination.
+2. Use the **stepper Z buttons** (large steps ~50 µm) to move the stage until you see the coverslip surface come into focus. You are looking for the interface between the coverslip and the sample — features like cells or debris should become visible.
+3. Once you can see the surface, use **small stepper steps** (~2 µm) and the **mouse scroll wheel** (piezo Z) to fine-tune the focus.
+4. Close the focus window when done.
+
+The `CoverslipZPosition` property stores the expected Z position of the coverslip. If the coverslip is consistently at a different Z position, update this value so that **Load Sample** brings the stage closer to focus on the first try.
 
 ## Finding and Selecting Cells
 
