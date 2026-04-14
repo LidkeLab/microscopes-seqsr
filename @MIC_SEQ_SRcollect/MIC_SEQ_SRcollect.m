@@ -1,4 +1,4 @@
-classdef MIC_SEQ_SRcollect < MIC_Abstract
+classdef MIC_SEQ_SRcollect < mic.abstract
 % MIC_SEQ_SRcollect SuperResolution data collection software.
 % Super resolution data collection class for Sequential microscope
 % Works with Matlab Instrument Control (MIC) classes since March 2017
@@ -132,8 +132,8 @@ classdef MIC_SEQ_SRcollect < MIC_Abstract
     
     methods
         function obj = MIC_SEQ_SRcollect(RunTestingMode)
-            % Enable the autonaming feature of MIC_Abstract.
-            obj = obj@MIC_Abstract(~nargout);
+            % Enable the autonaming feature of mic.abstract.
+            obj = obj@mic.abstract(~nargout);
             
             % Set a property listener for the StatusString property.
             addlistener(obj, 'StatusString', 'PostSet', @obj.updateStatus);
@@ -144,13 +144,36 @@ classdef MIC_SEQ_SRcollect < MIC_Abstract
                 return
             end
             
-            % Ask the user to confirm sample is not fixed to the stage,
-            % throw an error as a reminder if they answer Yes.
-            proceedstr = questdlg('Is the sample fixed on the stage?', ...
-                'Warning', 'Yes', 'No', 'Yes'); % default selection 'Yes'
-            if strcmp('Yes', proceedstr)
-                error(['Sample is fixed on the stage!  ', ...
-                    'Remove the sample and restart SeqSRcollect.']);
+            % Ask the user to confirm sample is not fixed to the stage.
+            % If yes (e.g. recovering from a crash), enter recovery mode:
+            % connect stepper without blind moves, verify Z is homed,
+            % raise the stage, then prompt the user to remove the sample.
+            SampleOnStage = strcmp('Yes', ...
+                questdlg('Is the sample fixed on the stage?', ...
+                'Warning', 'Yes', 'No', 'Yes'));
+
+            if SampleOnStage
+                % Recovery: connect to stepper and raise Z to the top
+                % of its 4mm travel range (away from the objective).
+                % The controller retains its position reference across
+                % SBC_Close/Open cycles (even though the homed flag
+                % resets), so moveToPosition(3, 4) is safe here.
+                obj.StatusString = ...
+                    'Recovery: raising stage away from objective...';
+                stepperRecovery = mic.StepperMotor('70850323');
+                pause(3);
+                stepperRecovery.moveToPosition(3, 4);
+                pause(obj.StepperWaitTime);
+
+                uiwait(msgbox(['Stage has been raised. Please ', ...
+                    'remove the sample, then click OK to ', ...
+                    'continue normal startup.'], ...
+                    'Remove Sample', 'modal'));
+
+                % Tear down so setupStageStepper() below can re-init
+                % cleanly through the normal path.
+                stepperRecovery.delete();
+                obj.StatusString = '';
             end
 
             % Setup instruments, ensuring proper order is maintained.
@@ -166,6 +189,7 @@ classdef MIC_SEQ_SRcollect < MIC_Abstract
                 obj.unloadSample(); % move stage up for sample mounting
             end
             obj.StatusString = '';
+            fprintf('MIC_SEQ_SRcollect setup complete. Ready.\n');
         end
         
         function delete(obj)
@@ -267,7 +291,7 @@ classdef MIC_SEQ_SRcollect < MIC_Abstract
             Fm=load(fullfile(p,'GainCalibration.mat'),'Params');
             obj.CalibDataSCMOS = Fm.Params;
             % Setup the sCMOS and set properties as needed.
-            obj.CameraSCMOS = MIC_DCAM4Camera();
+            obj.CameraSCMOS = mic.camera.DCAM4Camera();
             %CamSet = obj.CameraSCMOS.CameraSetting;
             %CamSet.DEFECT_CORRECT_MODE.Ind = 1;
             %obj.CameraSCMOS.setCamProperties(CamSet);
@@ -285,7 +309,7 @@ classdef MIC_SEQ_SRcollect < MIC_Abstract
             obj.StatusString = 'Setting up sample stage piezos...';
             
             % Connect to the piezos and create the piezo stage object.
-            obj.StagePiezo = MIC_NanoMaxPiezos(...
+            obj.StagePiezo = mic.stage3D.NanoMaxPiezos(...
                 obj.XPiezoSerialNums{1}, obj.XPiezoSerialNums{2}, ...
                 obj.YPiezoSerialNums{1}, obj.YPiezoSerialNums{2}, ...
                 obj.ZPiezoSerialNums{1}, obj.ZPiezoSerialNums{2}, ...
@@ -296,35 +320,135 @@ classdef MIC_SEQ_SRcollect < MIC_Abstract
         end
         
         function setupStageStepper(obj)
-            % Update the status indicator for the GUI.
+            % Connect to the stepper motors and move the stage to a
+            % safe position away from the objective. The controller
+            % retains its position reference across connections, so
+            % homing is not needed here — only after a power cycle
+            % (see homeSteppers).
             obj.StatusString = 'Setting up sample stage stepper motors...';
-            
-            % Setup the stepper motors for the NanoMax stage and move the
-            % stage to a safe position so as to avoid hitting the
-            % objective.
-            obj.StageStepper = MIC_StepperMotor('70850323');
+
+            obj.StageStepper = mic.StepperMotor('70850323');
+            pause(3); % let LoadSettings/EnableChannel/StartPolling settle
+
+            % If all axes report position 0, the controller was likely
+            % power-cycled and has no position reference. Home first.
+            if abs(obj.StageStepper.getPosition(1)) < 0.001 ...
+                    && abs(obj.StageStepper.getPosition(2)) < 0.001 ...
+                    && abs(obj.StageStepper.getPosition(3)) < 0.001
+                resp = questdlg(['All stepper positions are at zero. ', ...
+                    'The controller may have been power cycled. ', ...
+                    'Home the motors now? (No sample must be loaded)'], ...
+                    'Home Steppers?', 'Home', 'Skip', 'Home');
+                if strcmp(resp, 'Home')
+                    obj.homeSteppers();
+                end
+            end
+
+            % Stop any in-progress moves before issuing new ones.
+            obj.StageStepper.stopAll();
+            pause(0.5);
+
             obj.StageStepper.moveToPosition(3, 4); % z stepper
             obj.StageStepper.moveToPosition(1, 2.0650); % y stepper
             obj.StageStepper.moveToPosition(2, 2.2780); % x stepper
-            
-            % Check to make sure the steppers were setup properly.
-            pause(obj.StepperWaitTime); % let stage settle down first
-            XPosition = obj.StageStepper.getPosition(2);
-            YPosition = obj.StageStepper.getPosition(1);
-            ZPosition = obj.StageStepper.getPosition(3);
-            SmallStepSize = obj.StepperSmallStep;
-            if (abs(XPosition - 2.2780) > SmallStepSize) ...
-                    || (abs(YPosition - 2.0650) > SmallStepSize) ...
-                    || (abs(ZPosition - 4) > SmallStepSize)
-                % If any of these conditions are true, something has
-                % probably gone wrong with the stepper motor...
-                warning(['There is a problem with the stepper motors.', ...
-                    ' Please power cycle the stepper motor ', ...
-                    'controller and run SEQ.setupStageStepper()']);
-                obj.StageStepper.delete(); % delete so it can't be used
+
+            % Wait for the steppers to reach the requested positions.
+            % Poll until all axes are within tolerance or timeout.
+            TargetX = 2.2780; TargetY = 2.0650; TargetZ = 4;
+            Tol = obj.StepperSmallStep;
+            Timeout = 15; % seconds
+            settled = false;
+            for t = 1:Timeout
+                pause(1);
+                X = obj.StageStepper.getPosition(2);
+                Y = obj.StageStepper.getPosition(1);
+                Z = obj.StageStepper.getPosition(3);
+                if abs(X - TargetX) < Tol ...
+                        && abs(Y - TargetY) < Tol ...
+                        && abs(Z - TargetZ) < Tol
+                    settled = true;
+                    break
+                end
             end
-            
-            % Update the status indicator for the GUI.
+            if ~settled
+                warning(['Stepper motors did not reach the ', ...
+                    'target positions within %d s. Current: ', ...
+                    'X=%.4f Y=%.4f Z=%.4f. Try power cycling ', ...
+                    'the controller and run SEQ.homeSteppers()'], ...
+                    Timeout, X, Y, Z);
+            end
+
+            obj.StatusString = '';
+        end
+
+        function homeSteppers(obj)
+            % Home all stepper motor axes. Call this after power cycling
+            % the stepper controller. Do NOT call with a sample loaded
+            % — homing moves toward the objective.
+            fprintf('Homing stepper motors...\n');
+            obj.StatusString = 'Homing stepper motors...';
+            HomeOrder = [3, 1, 2];  % Z first (toward objective)
+            HomeLabels = {'Z', 'Y', 'X'};
+            for ii = 1:numel(HomeOrder)
+                ch = HomeOrder(ii);
+                startPos = obj.StageStepper.getPosition(ch);
+                fprintf('  %s axis (ch %d): start=%.4f mm, homing...', ...
+                    HomeLabels{ii}, ch, startPos);
+                obj.StatusString = sprintf( ...
+                    'Homing stepper %s axis...', HomeLabels{ii});
+                obj.StageStepper.goHome(ch);
+                % Wait for homing to complete. The motor moves to the
+                % limit switch then returns to 0. Detect completion by
+                % watching for position to settle near 0, or for position
+                % to stop changing (motor finished moving).
+                homed = false;
+                prevPos = startPos;
+                stableCount = 0;
+                for t = 1:60
+                    pause(1);
+                    pos = obj.StageStepper.getPosition(ch);
+                    if abs(pos) < 0.001 && t > 3
+                        % Position is at 0 — homing succeeded.
+                        fprintf(' done (%.4f mm, %ds)\n', pos, t);
+                        homed = true;
+                        break
+                    end
+                    if abs(pos - prevPos) < 0.0001 && t > 3
+                        stableCount = stableCount + 1;
+                    else
+                        stableCount = 0;
+                    end
+                    if stableCount >= 3
+                        % Position stopped changing — motor finished
+                        % but didn't reach 0. May already be homed.
+                        fprintf(' settled at %.4f mm (%ds)\n', pos, t);
+                        homed = true;
+                        break
+                    end
+                    prevPos = pos;
+                end
+                if ~homed
+                    fprintf(' FAILED (pos=%.4f mm)\n', pos);
+                    resp = questdlg(sprintf( ...
+                        ['%s axis failed to home. Power cycle the ', ...
+                         'stepper controller, then click Retry.'], ...
+                        HomeLabels{ii}), ...
+                        'Homing Failed', 'Retry', 'Abort', 'Retry');
+                    if strcmp(resp, 'Retry')
+                        % Reconnect and restart homing from the
+                        % beginning.
+                        obj.StageStepper.delete();
+                        obj.StageStepper = mic.StepperMotor('70850323');
+                        pause(3);
+                        fprintf('Reconnected. Restarting homing...\n');
+                        obj.homeSteppers();
+                        return
+                    else
+                        warning('%s axis not homed.', HomeLabels{ii});
+                    end
+                end
+            end
+            fprintf('Homing complete.\n');
             obj.StatusString = '';
         end
         
@@ -333,7 +457,7 @@ classdef MIC_SEQ_SRcollect < MIC_Abstract
             obj.StatusString = 'Setting up sample illumination LED...';
             
             % Setup the LED lamp object.
-            obj.Lamp660 = MIC_ThorlabsLED('Dev1', 'ao0');
+            obj.Lamp660 = mic.lightsource.ThorlabsLED('Dev1', 'ao0');
             
             % Update the status indicator for the GUI.
             obj.StatusString = '';
@@ -344,12 +468,12 @@ classdef MIC_SEQ_SRcollect < MIC_Abstract
             obj.StatusString = 'Setting up lasers...';
             
             % Setup the needed laser(s).
-            obj.Laser647 = MIC_MPBLaser();
-            %obj.Laser647 = MIC_TCubeLaserDiode('64849775', 'Power', 80, 182.5, 10);
-            obj.Laser405 = MIC_TCubeLaserDiode('64841724', ...
+            obj.Laser647 = mic.lightsource.MPBLaser();
+            %obj.Laser647 = mic.lightsource.TCubeLaserDiode('64849775', 'Power', 80, 182.5, 10);
+            obj.Laser405 = mic.lightsource.TCubeLaserDiode('64841724', ...
                 'Power', 32.25, 20.05, 10);
             % Usage: 
-            % TLD = MIC_TCubeLaserDiode(SerialNo, Mode, ...
+            % TLD = mic.lightsource.TCubeLaserDiode(SerialNo, Mode, ...
             %                           MaxPower, WperA, TIARange)
             % Max power was set to 32.25 mW (~80% of max), corresponding
             % to a current of 32.25 mA.  WperA was found by measuring the 
@@ -371,7 +495,7 @@ classdef MIC_SEQ_SRcollect < MIC_Abstract
             
             % Setup the flip mount object to control the neutral density
             % filter.
-            obj.FlipMount = MIC_FlipMountTTL('Dev1', 'Port0/Line0');
+            obj.FlipMount = mic.FlipMountTTL('Dev1', 'Port0/Line0');
             obj.FlipMount.FilterIn(); % place ND filter in 647 laser path
             
             % Update the status indicator for the GUI.
@@ -383,7 +507,7 @@ classdef MIC_SEQ_SRcollect < MIC_Abstract
             obj.StatusString = 'Setting up the shutter...';
             
             % Setup the shutter for control of the 647nm laser.
-            obj.Shutter = MIC_ShutterTTL('Dev1', 'Port0/Line1');
+            obj.Shutter = mic.ShutterTTL('Dev1', 'Port0/Line1');
             obj.Shutter.close(); % close the shutter by default
             
             % Update the status indicator for the GUI.
@@ -397,7 +521,7 @@ classdef MIC_SEQ_SRcollect < MIC_Abstract
         
             %CalibrationFilePath = ['C:\Users\lidkelab\Documents\', ...
              %   'MATLAB\matlab-instrument-control\Reg3DCalFile.mat'];
-            obj.AlignReg = MIC_Reg3DTrans(obj.CameraSCMOS, ...
+            obj.AlignReg = mic.Reg3DTrans(obj.CameraSCMOS, ...
                 obj.StagePiezo, CalibrationFilePath);
             
             % Modify properties of the registration object as needed.
@@ -437,17 +561,35 @@ classdef MIC_SEQ_SRcollect < MIC_Abstract
         end
         
         function loadSample(obj)
-            % Update the status indicator for the GUI.
             obj.StatusString = 'Loading the sample...';
-            
-            % Lower the sample stage towards the objective
+
+            fprintf('loadSample: centering piezos...\n');
             obj.StagePiezo.center();
-            obj.StageStepper.moveToPosition(1, 2.0650); % y stepper
-            obj.StageStepper.moveToPosition(2, 2.2780); % x stepper
-            obj.StageStepper.moveToPosition(3, obj.CoverslipZPosition); % z stepper
-            
-            % Update the status indicator for the GUI.
+
+            fprintf('loadSample: moving Y to 2.0650...\n');
+            obj.StageStepper.moveToPosition(1, 2.0650);
+            fprintf('loadSample: moving X to 2.2780...\n');
+            obj.StageStepper.moveToPosition(2, 2.2780);
+            pause(obj.PiezoSettlingTime);
+            fprintf('loadSample: moving Z to %.4f...\n', obj.CoverslipZPosition);
+            obj.StageStepper.moveToPosition(3, obj.CoverslipZPosition);
+
+            % Wait for Z to reach target
+            for t = 1:15
+                pause(1);
+                Z = obj.StageStepper.getPosition(3);
+                fprintf('  t=%ds Z=%.4f\n', t, Z);
+                if abs(Z - obj.CoverslipZPosition) < obj.StepperSmallStep
+                    break
+                end
+            end
+            fprintf('loadSample: final positions X=%.4f Y=%.4f Z=%.4f\n', ...
+                obj.StageStepper.getPosition(2), ...
+                obj.StageStepper.getPosition(1), ...
+                obj.StageStepper.getPosition(3));
+
             obj.StatusString = '';
+            fprintf('loadSample: done.\n');
         end
         
         function findCoverslipFocus(obj)
@@ -705,8 +847,9 @@ classdef MIC_SEQ_SRcollect < MIC_Abstract
     end
     
     methods (Static)
-        function State = unitTest()
-            % unitTest for the sequential microscope.. not yet written!
+        function Success = funcTest()
+            % funcTest for the sequential microscope.. not yet written!
+            Success = 1;
         end
 
     end

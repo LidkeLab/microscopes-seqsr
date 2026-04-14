@@ -36,11 +36,11 @@ switch obj.SaveFileType
         % For either .h5 file save type, we'll still use the same
         % supergroup of Channel01.
         FileH5 = FileName;
-        MIC_H5.createFile(FileH5);
-        MIC_H5.createGroup(FileH5, 'Channel01');
-        MIC_H5.createGroup(FileH5, 'Channel01/Zposition001');
-        MIC_H5.createGroup(FileH5,'Calibration');
-        MIC_H5.createGroup(FileH5,'Metadata');
+        mic.H5.createFile(FileH5);
+        mic.H5.createGroup(FileH5, 'Channel01');
+        mic.H5.createGroup(FileH5, 'Channel01/Zposition001');
+        mic.H5.createGroup(FileH5,'Calibration');
+        mic.H5.createGroup(FileH5,'Metadata');
     otherwise
         error('StartSequence:: unknown file save type')
 end
@@ -76,7 +76,11 @@ end
 if obj.UseBrightfieldReg
     obj.StatusString = sprintf(['Cell %g, Sequence 1 - ', ...
         'Attempting initial brightfield alignment...'], RefStruct.CellIdx);
-    obj.Lamp660.setPower(RefStruct.LampPower);
+    if isfield(RefStruct, 'LampPower')
+        obj.Lamp660.setPower(RefStruct.LampPower);
+    else
+        obj.Lamp660.setPower(obj.Lamp660Power);
+    end
     pause(obj.LampWait);
     obj.CameraSCMOS.ExpTime_Capture = obj.ExposureTimeCapture;
     obj.CameraSCMOS.AcquisitionType = 'capture';
@@ -107,7 +111,7 @@ if obj.UseBrightfieldReg
                 % For either .h5 file save type, we'll still use the same
                 % supergroup of Channel01/Zposition001.
                 SequenceName = 'Channel01/Zposition001';
-                MIC_H5.createGroup(FileH5, SequenceName);
+                mic.H5.createGroup(FileH5, SequenceName);
                 obj.save2hdf5(FileH5, SequenceName);
             otherwise
                 error('StartSequence:: unknown SaveFileType')
@@ -192,7 +196,11 @@ for ii = 1:obj.NumberOfSequences
         obj.StatusString = sprintf(['Cell %g, Sequence %i - ', ...
             'Attempting periodic registration...'], ...
             RefStruct.CellIdx, ii);
+        if isfield(RefStruct, 'LampPower')
         obj.Lamp660.setPower(RefStruct.LampPower);
+    else
+        obj.Lamp660.setPower(obj.Lamp660Power);
+    end
         pause(obj.LampWait);
         obj.CameraSCMOS.ExpTime_Capture = obj.ExposureTimeCapture;
         obj.CameraSCMOS.AcquisitionType = 'capture';
@@ -218,7 +226,11 @@ for ii = 1:obj.NumberOfSequences
     obj.CameraSCMOS.SequenceLength = obj.NBrightfieldIms;
     obj.CameraSCMOS.ExpTime_Sequence = obj.ExposureTimeCapture;
     obj.CameraSCMOS.ROI = obj.SCMOS_ROI_Collect;
-    obj.Lamp660.setPower(RefStruct.LampPower);
+    if isfield(RefStruct, 'LampPower')
+        obj.Lamp660.setPower(RefStruct.LampPower);
+    else
+        obj.Lamp660.setPower(obj.Lamp660Power);
+    end
     pause(obj.LampWait);
     PreSeqImages = obj.CameraSCMOS.start_sequence();
     obj.Lamp660.setPower(0);
@@ -250,7 +262,11 @@ for ii = 1:obj.NumberOfSequences
     obj.CameraSCMOS.SequenceLength = obj.NBrightfieldIms;
     obj.CameraSCMOS.ExpTime_Sequence = obj.ExposureTimeCapture;
     obj.CameraSCMOS.ROI = obj.SCMOS_ROI_Collect;
-    obj.Lamp660.setPower(RefStruct.LampPower);
+    if isfield(RefStruct, 'LampPower')
+        obj.Lamp660.setPower(RefStruct.LampPower);
+    else
+        obj.Lamp660.setPower(obj.Lamp660Power);
+    end
     pause(obj.LampWait);
     PostSeqImages = obj.CameraSCMOS.start_sequence();
     obj.Lamp660.setPower(0);
@@ -261,15 +277,15 @@ for ii = 1:obj.NumberOfSequences
             % Place the current dataset in the same group as all other
             % datasets.
             SequenceName = sprintf('Data%04d', ii);
-            MIC_H5.writeAsync_uint16(FileH5, ...
+            mic.H5.writeAsync_uint16(FileH5, ...
                 'Channel01/Zposition001', SequenceName, Sequence);
         case 'h5DataGroups'
             % Create a new group for the current dataset, so each dataset
             % will have its own group in the .h5 file.
             DataName = sprintf('Data%04d', ii);
             SequenceName = sprintf('Channel01/Zposition001/%s', DataName);
-            MIC_H5.saveWait();
-            MIC_H5.createGroup(FileH5, SequenceName);
+            mic.H5.saveWait();
+            mic.H5.createGroup(FileH5, SequenceName);
             
             % Save the exportState() exportables.
             obj.StatusString = sprintf(['Cell %g, Sequence %i - ', ...
@@ -288,7 +304,7 @@ for ii = 1:obj.NumberOfSequences
             obj.saveAttAndData(FileH5, FocusImName, struct(), Data, struct())
             
             % Begin writing the data.
-            MIC_H5.writeAsync_uint16(...
+            mic.H5.writeAsync_uint16(...
                 FileH5, SequenceName, DataName, Sequence);
         otherwise
             error('StartSequence:: unknown SaveFileType')
@@ -331,7 +347,7 @@ switch obj.SaveFileType
             'Exporting object Data and Children with exportState()...';
         fprintf('Saving exportables from exportState()................ \n')
         SequenceName = 'Channel01/Zposition001';
-        MIC_H5.createGroup(FileH5, SequenceName);
+        mic.H5.createGroup(FileH5, SequenceName);
         obj.save2hdf5(FileH5, SequenceName);
         fprintf('Saving exportables from exportState() complete \n')
         obj.StatusString = '';
